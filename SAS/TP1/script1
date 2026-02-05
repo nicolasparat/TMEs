@@ -1,0 +1,9 @@
+while true ; do
+for i in { 1 . . 5 } ; do
+echo bla
+sleep 1
+done
+echo −n " >> "
+read a
+echo $a
+done
