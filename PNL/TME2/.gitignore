@@ -1,3 +1,6 @@
 # Images
 initramfs_de_boot
 myHome.img
+
+# Dossier share
+share/*

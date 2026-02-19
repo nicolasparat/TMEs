@@ -7,9 +7,9 @@ SHARED="./share"
 KERNEL=/tmp/linux-6.5.7/arch/x86/boot/bzImage
 
 if [ -z ${KDB} ]; then
-    CMDLINE='root=/dev/sda1 rw console=ttyS0 kgdboc=ttyS1'
+    CMDLINE='root=/dev/sda1 rw console=ttyS0 kgdboc=ttyS1 nokaslr'
 else
-    CMDLINE='root=/dev/sda1 rw console=ttyS0 kgdboc=ttyS1 kgdbwait'
+    CMDLINE='root=/dev/sda1 rw console=ttyS0 kgdboc=ttyS1 nokaslr kgdbwait'
 fi
 
 FLAGS=""
