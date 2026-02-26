@@ -12,6 +12,18 @@ make -j 64
 cp /Vrac/pnl-etu/pnl-tp-2021.img /tmp
 ```
 
+# Display VM output
+
+```
+dmesg
+```
+
+# Leave VM
+
+```
+CTRL + A puis c puis quit
+```
+
 # Starting a debugger
 
 ```
@@ -30,4 +42,10 @@ echo "g" > /proc/sysrq-trigger
 ```
 lx_symbols
 backtrace
+```
+
+# Kernel docs
+
+```
+https://elixir.bootlin.com/linux/v6.5.7/source
 ```

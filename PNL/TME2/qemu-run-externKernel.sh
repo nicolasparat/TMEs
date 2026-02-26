@@ -21,5 +21,5 @@ exec qemu-system-x86_64 ${FLAGS} \
      -net user -net nic \
      -serial mon:stdio -serial tcp::1234,server,nowait \
      -boot c -m 1G \
-     -kernel "${KERNEL}" \
+     -kernel "${KERNEL}" -nographic \
      -append "${CMDLINE}"
