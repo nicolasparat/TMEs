@@ -36,6 +36,7 @@ int monitor_pid(pid_t my_pid) {
 }
 
 int monitor_fn(void *arg) {
+    // NB : Ce serait plus propre d'utiliser la valeur de arg plutôt que le monitor global, mais le résultat est le même (et j'ai la flemme).
     while (!kthread_should_stop()) {
         struct task_struct *tasks = get_pid_task(monitor.pid_struct, PIDTYPE_PID);
         if (!tasks) break;
