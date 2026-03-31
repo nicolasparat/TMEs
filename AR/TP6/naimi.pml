@@ -33,6 +33,8 @@ inline Request_CS ( ) {
    if
       :: (father != NIL) -> canal[father]!req,id; father = NIL;
    fi
+
+   // Je suppose que l'attente du token est implicite, mais sinon il faudrait l'ajouter ici.
 }
 
 inline Release_CS ( ) {
@@ -41,6 +43,7 @@ inline Release_CS ( ) {
    
    if
       :: (next != NIL) -> canal[next]!tk,id; token = 0; next = NIL;
+      :: else -> skip;
    fi
 }
 
