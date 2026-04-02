@@ -6,6 +6,7 @@
 #include <linux/sched/task.h>
 #include <linux/pid.h>
 #include <linux/slab.h>
+#include <linux/shrinker.h>
 
 #define MAX_LEN 32
 
@@ -154,17 +155,59 @@ static ssize_t taskmonitor_store(struct kobject *kobj, struct kobj_attribute *at
 
 static const struct kobj_attribute myattr = __ATTR_RW(taskmonitor);
 
+static unsigned long tm_count(struct shrinker *s, struct shrink_control *sc) {
+    unsigned long ret;    
+    mutex_lock(&monitor.mtx);
+    ret = monitor.count;
+    mutex_unlock(&monitor.mtx);
+    return ret;
+}
+
+static unsigned long tm_scan(struct shrinker *s, struct shrink_control *sc) {
+    if (!sc->nr_to_scan) { return 0; }
+
+    struct task_sample *smp, *tmp;
+    unsigned long freed = 0;
+
+    mutex_lock(&monitor.mtx);
+
+    list_for_each_entry_safe(smp, tmp, &monitor.head, list) {
+        list_del(&smp->list);
+        kfree(smp);
+        monitor.count--;
+        freed++;
+
+        if (freed >= sc->nr_to_scan) { break; }
+    }
+
+    mutex_unlock(&monitor.mtx);
+    printk("Shrinked : %lu", freed);
+    return freed;
+}
+
+static struct shrinker tm_shrinker = {
+    .count_objects = tm_count,
+    .scan_objects = tm_scan,
+    .seeks = DEFAULT_SEEKS,
+};
+
 static int __init hello_init(void) {
+    // NB : en cas de crash, on ne désalloue pas tout correctement mais c'est pas grave pour un module trivial comme celui-ci.
+    
     int ret = monitor_pid(pid);
     if (ret) {
         return ret;
+    }
+
+    int retshrinker = register_shrinker(&tm_shrinker, "task_monitor");
+    if (retshrinker) {
+        return retshrinker;
     }
 
     int retval = sysfs_create_file(kernel_kobj, &myattr.attr);
     if (retval) {
         return retval;
     }
-
 
     monitor_thread = kthread_run(monitor_fn, &monitor, "task_monitor_thread");
     if (IS_ERR(monitor_thread)) {
@@ -179,6 +222,7 @@ static int __init hello_init(void) {
 module_init(hello_init);
 
 static void __exit hello_exit(void) {
+    unregister_shrinker(&tm_shrinker);
     sysfs_remove_file(kernel_kobj, &myattr.attr);
 
     if (monitor_thread) {
