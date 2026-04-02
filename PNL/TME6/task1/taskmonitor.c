@@ -1,4 +1,3 @@
-
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -6,6 +5,7 @@
 #include <linux/delay.h>
 #include <linux/sched/task.h>
 #include <linux/pid.h>
+#include <linux/slab.h>
 
 #define MAX_LEN 32
 
@@ -44,8 +44,9 @@ int monitor_pid(pid_t my_pid) {
     }
 
     monitor.pid_struct = pid_struct;
+    monitor.count = 0;
     mutex_init(&monitor.mtx);
-    INIT_LIST_HEAD(monitor.head);
+    INIT_LIST_HEAD(&monitor.head);
 
     printk(KERN_INFO "monitor_pid: Monitoring PID %d\n", pid);
 
@@ -60,9 +61,14 @@ bool get_sample(struct task_monitor *tm, struct task_sample *smpl) {
     if(is_alive) {
         smpl->utime = tasks->utime;
         smpl->stime = tasks->stime;
-        smpl->total_vm = tasks->mm->total_vm;
-        smpl->stack_vm = tasks->mm->stack_vm;
-        smpl->data_vm = tasks->mm->data_vm;
+
+        struct mm_struct *mm = get_task_mm(tasks);
+        if (mm) {
+            smpl->total_vm = mm->total_vm;
+            smpl->stack_vm = mm->stack_vm;
+            smpl->data_vm = mm->data_vm;
+            mmput(mm);
+        }
     }
     
     put_task_struct(tasks);
@@ -70,7 +76,7 @@ bool get_sample(struct task_monitor *tm, struct task_sample *smpl) {
 }
 
 int save_sample(void) {
-    struct task_sample *my_sample = kzalloc(sizeof(struct task_sample));
+    struct task_sample *my_sample = kzalloc(sizeof(struct task_sample), GFP_KERNEL);
     if (!my_sample) {
         printk(KERN_ERR "kmalloc failed\n");
         return -ENOMEM;
@@ -82,17 +88,17 @@ int save_sample(void) {
     }
 
     mutex_lock(&monitor.mtx);
-    list_add(&my_sample.list, &monitor.head);
+    list_add(&my_sample->list, &monitor.head);
+    monitor.count++;
     mutex_unlock(&monitor.mtx);
+
+    return 0;
 }
 
 int monitor_fn(void *arg) {
     // NB : Ce serait plus propre d'utiliser la valeur de arg plutôt que le monitor global, mais le résultat est le même (et j'ai la flemme).
     while (!kthread_should_stop()) {
-        if(get_sample(&monitor, &sample)) {
-            printk(KERN_INFO "pid %d usr %llu sys %llu\n", pid, (unsigned long long)sample.utime, (unsigned long long)sample.stime);
-        }
-        
+        if (save_sample() == -ESRCH) { break; }
         ssleep(1);
     }
 
@@ -105,7 +111,10 @@ static ssize_t taskmonitor_show(struct kobject *kobj, struct kobj_attribute *att
     
     mutex_lock(&monitor.mtx);
     list_for_each_entry(entry, &monitor.head, list) {
-        counter += scnprintf(buf + counter, PAGE_SIZE - counter, "pid %d usr %llu sys %llu\n", pid, (unsigned long long)entry->utime, (unsigned long long)entry->stime);
+        counter += scnprintf(
+            buf + counter, PAGE_SIZE - counter, "pid %d usr %llu sys %llu total %lu stack %lu data %lu \n", 
+            pid, (unsigned long long)entry->utime, (unsigned long long)entry->stime, entry->total_vm, entry->stack_vm, entry->data_vm
+        );
 
         if (counter >= PAGE_SIZE) break;
     }
