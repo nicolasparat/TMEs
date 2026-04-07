@@ -3,4 +3,4 @@
 - SAM : 
 - PNL : TP1
 - SRCS : TP4, Partiel
-- AR : Parcours de l'arbre, Promela
+- AR : TP1, Parcours de l'arbre, Promela
