@@ -1,6 +1,5 @@
 # TMEs à finir
 
-- SAM : 
 - PNL : TP1
-- SRCS : TP 1 (question 3), TP2 (question 3), TP3
-- AR : TP1
+- SRCS : TP4, Partiel
+- AR : TP1, Parcours de l'arbre, Promela
