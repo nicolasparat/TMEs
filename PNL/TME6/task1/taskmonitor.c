@@ -36,6 +36,7 @@ struct task_sample {
 
 static struct task_monitor monitor;
 static struct task_struct *monitor_thread;
+static struct kmem_cache *sample_cache;
 
 int monitor_pid(pid_t my_pid) {
     struct pid * pid_struct = find_get_pid(my_pid);
@@ -77,14 +78,14 @@ bool get_sample(struct task_monitor *tm, struct task_sample *smpl) {
 }
 
 int save_sample(void) {
-    struct task_sample *my_sample = kzalloc(sizeof(struct task_sample), GFP_KERNEL);
+    struct task_sample *my_sample = kmem_cache_alloc(sample_cache, GFP_KERNEL);
     if (!my_sample) {
         printk(KERN_ERR "kmalloc failed\n");
         return -ENOMEM;
     }
 
     if (!get_sample(&monitor, my_sample)) {
-        kfree(my_sample);
+        kmem_cache_free(sample_cache, my_sample);
         return -ESRCH;
     }
 
@@ -173,7 +174,7 @@ static unsigned long tm_scan(struct shrinker *s, struct shrink_control *sc) {
 
     list_for_each_entry_safe(smp, tmp, &monitor.head, list) {
         list_del(&smp->list);
-        kfree(smp);
+        kmem_cache_free(sample_cache, smp);
         monitor.count--;
         freed++;
 
@@ -193,10 +194,16 @@ static struct shrinker tm_shrinker = {
 
 static int __init hello_init(void) {
     // NB : en cas de crash, on ne désalloue pas tout correctement mais c'est pas grave pour un module trivial comme celui-ci.
-    
+
     int ret = monitor_pid(pid);
     if (ret) {
         return ret;
+    }
+
+    sample_cache = KMEM_CACHE(task_sample, 0);
+    if (!sample_cache) {
+        printk(KERN_ERR "Failed to create task_sample cache\n");
+        return -ENOMEM;
     }
 
     int retshrinker = register_shrinker(&tm_shrinker, "task_monitor");
@@ -238,9 +245,11 @@ static void __exit hello_exit(void) {
     mutex_lock(&monitor.mtx);
     list_for_each_entry_safe(entry, tmp, &monitor.head, list) {
         list_del(&entry->list);
-        kfree(entry);
+        kmem_cache_free(sample_cache, entry);
     }
     mutex_unlock(&monitor.mtx);
+
+    kmem_cache_destroy(sample_cache);
 
     printk(KERN_INFO "Module unloaded\n");
 }
