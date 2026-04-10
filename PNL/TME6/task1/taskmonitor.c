@@ -32,6 +32,7 @@ struct task_sample {
     unsigned long total_vm;
     unsigned long stack_vm;
     unsigned long data_vm;
+    struct kref refcount;
 };
 
 static struct task_monitor monitor;
