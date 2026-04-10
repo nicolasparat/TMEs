@@ -37,6 +37,7 @@ struct task_sample {
 static struct task_monitor monitor;
 static struct task_struct *monitor_thread;
 static struct kmem_cache *sample_cache;
+static mempool_t *sample_pool;
 
 int monitor_pid(pid_t my_pid) {
     struct pid * pid_struct = find_get_pid(my_pid);
@@ -78,14 +79,14 @@ bool get_sample(struct task_monitor *tm, struct task_sample *smpl) {
 }
 
 int save_sample(void) {
-    struct task_sample *my_sample = kmem_cache_alloc(sample_cache, GFP_KERNEL);
+    struct task_sample *my_sample = mempool_alloc(sample_pool, GFP_KERNEL);
     if (!my_sample) {
         printk(KERN_ERR "kmalloc failed\n");
         return -ENOMEM;
     }
 
     if (!get_sample(&monitor, my_sample)) {
-        kmem_cache_free(sample_cache, my_sample);
+        mempool_free(my_sample, sample_pool);
         return -ESRCH;
     }
 
@@ -174,7 +175,7 @@ static unsigned long tm_scan(struct shrinker *s, struct shrink_control *sc) {
 
     list_for_each_entry_safe(smp, tmp, &monitor.head, list) {
         list_del(&smp->list);
-        kmem_cache_free(sample_cache, smp);
+        mempool_free(smp, sample_pool);
         monitor.count--;
         freed++;
 
@@ -206,6 +207,12 @@ static int __init hello_init(void) {
         return -ENOMEM;
     }
 
+    sample_pool = mempool_create_slab_pool(32, sample_cache);
+    if (!sample_pool) {
+        printk(KERN_ERR "Failed to create memory pool\n");
+        return -ENOMEM;
+    }
+
     int retshrinker = register_shrinker(&tm_shrinker, "task_monitor");
     if (retshrinker) {
         return retshrinker;
@@ -229,27 +236,28 @@ static int __init hello_init(void) {
 module_init(hello_init);
 
 static void __exit hello_exit(void) {
-    unregister_shrinker(&tm_shrinker);
-    sysfs_remove_file(kernel_kobj, &myattr.attr);
-
     if (monitor_thread) {
         kthread_stop(monitor_thread);
         monitor_thread = NULL;
     }
 
-    if (monitor.pid_struct) {
-        put_pid(monitor.pid_struct);
-    }
+    sysfs_remove_file(kernel_kobj, &myattr.attr);
+    unregister_shrinker(&tm_shrinker);
 
     struct task_sample *entry, *tmp;
     mutex_lock(&monitor.mtx);
     list_for_each_entry_safe(entry, tmp, &monitor.head, list) {
         list_del(&entry->list);
-        kmem_cache_free(sample_cache, entry);
+        mempool_free(entry, sample_pool);
     }
     mutex_unlock(&monitor.mtx);
 
+    mempool_destroy(sample_pool);
     kmem_cache_destroy(sample_cache);
+
+    if (monitor.pid_struct) {
+        put_pid(monitor.pid_struct);
+    }
 
     printk(KERN_INFO "Module unloaded\n");
 }
