@@ -1,0 +1,17 @@
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/MergeReducer.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/util/SequenceFileCreator.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/noodle/NoodleByMonthReducer.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/wordcount/WordCount.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/MergeListeningAndSkipsMapper.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/CoupleIntWritable.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/MergeListenerMapper.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/NbListenerReducer.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/LastFmStats.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/noodle/NoodleByMonth.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/ListeningAndSkipsMapper.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/ListeningAndSkipsReducer.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/TripleIntWritable.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/noodle/TimeSlotWithMonth.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/noodle/NoodleByMonthMapper.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/noodle/NoodleByMonthPartitioner.java
+/home/desktop/TMEs/DATACLOUD/TP1/resources/resources_maven/src/main/java/datacloud/hadoop/lastfm/NbListenerMapper.java
