@@ -1,1 +1,0 @@
-21515673@ppti-14-508-07:/users/nfs/Etu3/21515673/M1/TMEs/SRCS/TME6/ressources/srcs/chat$ protoc --proto_path=. --proto_path=/usr/local/protobuf-master/src --plugin=/usr/local/grpc-java-master/compiler/build/exe/java_plugin/protocgen-grpc-java --grpc-java_out=../../.. --java_out=../../.. chat.proto
